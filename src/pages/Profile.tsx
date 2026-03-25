@@ -231,7 +231,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen pb-6">
+    <div className="flex flex-col min-h-full flex-1 pb-6">
       {/* ── HERO SECTION ── */}
       <div
         className="relative px-4 pt-10 pb-8 overflow-hidden"

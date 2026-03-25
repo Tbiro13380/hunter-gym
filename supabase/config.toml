@@ -1,0 +1,3 @@
+# Configuração local / deploy — ajuste project_id ao vincular ao projeto Supabase.
+[functions.shadow-coach]
+verify_jwt = true

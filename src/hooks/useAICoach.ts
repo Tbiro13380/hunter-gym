@@ -1,11 +1,9 @@
-import { useState, useCallback, useRef } from 'react'
-import OpenAI from 'openai'
+import { useState, useCallback } from 'react'
 import type { ChatMessage } from '../lib/types'
+import { supabase, SUPABASE_ENABLED } from '../lib/supabaseClient'
 import { useUserStore } from '../store/userStore'
 import { useWorkoutStore } from '../store/workoutStore'
 import { getSessionVolume } from '../lib/progressionLogic'
-
-const SYSTEM_PROMPT = `Você é um coach de musculação especialista em progressão de cargas e periodização. Seu nome é Shadow Coach. Analise os dados de treino do usuário e responda em português brasileiro de forma direta, objetiva e motivadora — com o tom de um mentor exigente mas justo, como um personagem de Solo Leveling. Foque em: exercícios travados há mais de 2 semanas, progressão consistente, desequilíbrios musculares e sugestões práticas de periodização. Nunca seja genérico.`
 
 function buildContextMessage(
   profile: ReturnType<typeof useUserStore.getState>['profile'],
@@ -42,26 +40,18 @@ ${sessionsSummary || 'Nenhum treino registrado ainda.'}`
 export function useAICoach() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [loading, setLoading] = useState(false)
-  const clientRef = useRef<OpenAI | null>(null)
-
-  const getClient = useCallback(() => {
-    if (!clientRef.current) {
-      const apiKey = import.meta.env.VITE_OPENAI_API_KEY
-      if (!apiKey || apiKey === 'sua_chave_aqui') {
-        throw new Error('VITE_OPENAI_API_KEY não configurada no arquivo .env')
-      }
-      clientRef.current = new OpenAI({
-        apiKey,
-        dangerouslyAllowBrowser: true,
-      })
-    }
-    return clientRef.current
-  }, [])
 
   const sendMessage = useCallback(
     async (userText: string) => {
       const profile = useUserStore.getState().profile
       const { sessions } = useWorkoutStore.getState()
+
+      const priorForApi = messages
+        .filter((m) => m.role !== 'system')
+        .map((m) => ({
+          role: m.role as 'user' | 'assistant',
+          content: m.content,
+        }))
 
       const userMsg: ChatMessage = {
         id: crypto.randomUUID(),
@@ -83,37 +73,51 @@ export function useAICoach() {
       setMessages((prev) => [...prev, assistantMsg])
 
       try {
-        const client = getClient()
-        const contextText = buildContextMessage(profile, sessions)
-
-        const apiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-          { role: 'system', content: SYSTEM_PROMPT },
-          ...(contextText ? [{ role: 'user' as const, content: `Contexto do usuário:\n${contextText}` }, { role: 'assistant' as const, content: 'Entendido. Analisei seus dados. Como posso ajudar?' }] : []),
-          ...messages.filter((m) => m.role !== 'system').map((m) => ({
-            role: m.role as 'user' | 'assistant',
-            content: m.content,
-          })),
-          { role: 'user', content: userText },
-        ]
-
-        const stream = await client.chat.completions.create({
-          model: 'gpt-4o-mini',
-          messages: apiMessages,
-          stream: true,
-          max_tokens: 800,
-          temperature: 0.85,
-        })
-
-        let fullContent = ''
-        for await (const chunk of stream) {
-          const delta = chunk.choices[0]?.delta?.content ?? ''
-          fullContent += delta
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantMsg.id ? { ...m, content: fullContent } : m
-            )
+        if (!SUPABASE_ENABLED || !supabase) {
+          throw new Error(
+            'Configure SUPABASE_URL e SUPABASE_ANON_KEY no .env e faça deploy da função shadow-coach.'
           )
         }
+
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+        if (!session) {
+          throw new Error(
+            'O Shadow Coach exige login com conta Supabase (e-mail/Google). Contas só locais não têm sessão para chamar o servidor.'
+          )
+        }
+
+        const contextText = buildContextMessage(profile, sessions)
+
+        const { data, error } = await supabase.functions.invoke('shadow-coach', {
+          body: {
+            contextText: contextText || null,
+            priorMessages: priorForApi,
+            userMessage: userText,
+          },
+        })
+
+        if (error) {
+          throw new Error(error.message || 'Erro ao chamar shadow-coach')
+        }
+
+        const content =
+          data && typeof data === 'object' && 'content' in data && typeof (data as { content: unknown }).content === 'string'
+            ? (data as { content: string }).content
+            : ''
+
+        if (!content) {
+          const errMsg =
+            data && typeof data === 'object' && 'error' in data
+              ? String((data as { error: unknown }).error)
+              : 'Resposta vazia do servidor.'
+          throw new Error(errMsg)
+        }
+
+        setMessages((prev) =>
+          prev.map((m) => (m.id === assistantMsg.id ? { ...m, content } : m))
+        )
       } catch (err) {
         const errorText =
           err instanceof Error
@@ -128,7 +132,7 @@ export function useAICoach() {
         setLoading(false)
       }
     },
-    [messages, getClient]
+    [messages]
   )
 
   const analyzeProgress = useCallback(() => {

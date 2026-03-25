@@ -151,7 +151,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen pb-4">
+    <div className="flex flex-col min-h-full flex-1 pb-4">
       {/* ── HEADER SECTION ── */}
       <div
         className="relative px-4 pt-10 pb-6 overflow-hidden"

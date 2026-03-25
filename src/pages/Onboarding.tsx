@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useUserStore } from '../store/userStore'
 import { useAuthStore } from '../store/authStore'
 import { SUPABASE_ENABLED } from '../lib/supabaseClient'
+import HunterLogoMark from '../components/ui/HunterLogoMark'
 
 export default function Onboarding() {
   const [name, setName] = useState('')
@@ -23,7 +24,7 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-[#0a0a0f] flex flex-col items-center justify-center px-6 relative overflow-hidden">
+    <div className="app-shell min-h-[100dvh] bg-[#0a0a0f] flex flex-col items-center justify-center px-6 relative overflow-hidden">
 
       {/* Background orbs */}
       <div className="absolute top-1/4 -left-24 w-64 h-64 rounded-full bg-[#7c3aed]/10 blur-3xl pointer-events-none" />
@@ -38,10 +39,8 @@ export default function Onboarding() {
           <div className="absolute w-24 h-24 rounded-full border border-[#a855f7]/10 animate-spin-slow" style={{ animationDirection: 'reverse', animationDuration: '10s' }} />
 
           {/* Badge */}
-          <div className="w-20 h-20 rounded-2xl bg-[#12121a] border-2 border-[#7c3aed]/60 flex items-center justify-center animate-pulse-glow">
-            <svg viewBox="0 0 24 24" fill="none" className="w-10 h-10 text-[#a855f7]" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
-            </svg>
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-[#12121a] border-2 border-[#7c3aed]/60 animate-pulse-glow">
+            <HunterLogoMark className="h-10 w-10" />
           </div>
         </div>
 

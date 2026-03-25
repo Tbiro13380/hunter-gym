@@ -37,7 +37,7 @@ const ITEMS: NavItem[] = [
 export default function BottomNav() {
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 max-w-lg mx-auto"
+      className="app-shell fixed bottom-0 left-0 right-0 z-50 w-full"
       style={{ background: '#131318', borderTop: '1px solid #4a4455' }}
     >
       <div className="flex items-stretch justify-around h-16 safe-bottom">

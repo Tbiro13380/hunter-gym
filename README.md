@@ -40,9 +40,10 @@ Hunter Gym é um aplicativo mobile-first de acompanhamento de treinos com sistem
 - **Dungeons coletivas**: crie desafios com objetivo, dificuldade, prazo e recompensa
 
 ### AI Coach
-- Chat com **GPT-4o mini** via SDK oficial da OpenAI
-- **Streaming** em tempo real — respostas token a token
+- Chat com **GPT-4o mini** via **Edge Function** `shadow-coach` (chave OpenAI só no Supabase, não no bundle)
+- Resposta completa por requisição (sem streaming no cliente)
 - Contexto automático do histórico (últimos 10 treinos + stats)
+- Exige **login Supabase** (JWT); contas só locais não chamam a função
 - 6 prompts rápidos pré-definidos
 - Renderização de markdown básico (bold, listas)
 
@@ -58,7 +59,7 @@ Hunter Gym é um aplicativo mobile-first de acompanhamento de treinos com sistem
 | Estado global | Zustand v5 (persist → localStorage) |
 | Gráficos | Recharts |
 | Drag & Drop | @dnd-kit |
-| IA | OpenAI SDK (gpt-4o-mini) |
+| IA | OpenAI API via Supabase Edge Function `shadow-coach` (gpt-4o-mini) |
 | Áudio | Web Audio API nativa |
 | Deploy | Vercel |
 
@@ -85,14 +86,15 @@ npm install
 cp .env.example .env
 ```
 
-Edite o `.env` e adicione sua chave da OpenAI:
+Edite o `.env` com **SUPABASE_URL** e **SUPABASE_ANON_KEY** (e opcionalmente **VAPID_PUBLIC_KEY**).  
+A chave **OpenAI** não vai no front: configure nos secrets do projeto e faça deploy da função `shadow-coach`:
 
-```
-VITE_OPENAI_API_KEY=sk-...
+```bash
+supabase secrets set OPENAI_API_KEY=sk-...
+supabase functions deploy shadow-coach
 ```
 
-> **Onde obter:** [platform.openai.com/api-keys](https://platform.openai.com/api-keys)  
-> O Shadow Coach usa o modelo `gpt-4o-mini` — custo muito baixo (~$0.002/1K tokens).
+> Chave em [platform.openai.com/api-keys](https://platform.openai.com/api-keys). Modelo: `gpt-4o-mini`.
 
 ### 4. Inicie o servidor de desenvolvimento
 
@@ -125,10 +127,9 @@ vercel
 1. Faça push para um repositório no GitHub
 2. Acesse [vercel.com](https://vercel.com) → **Add New Project**
 3. Importe o repositório
-4. Configure a variável de ambiente:
-   - **Name:** `VITE_OPENAI_API_KEY`
-   - **Value:** `sk-...`
-5. Clique em **Deploy**
+4. Configure **SUPABASE_URL** e **SUPABASE_ANON_KEY** (mesmos valores do Dashboard Supabase)
+5. A chave OpenAI permanece apenas em **Supabase → Project Settings → Edge Functions → Secrets** (`OPENAI_API_KEY`)
+6. Clique em **Deploy**
 
 > O `vercel.json` já está configurado com rewrites para SPA routing e cache headers para assets.
 

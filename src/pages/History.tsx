@@ -404,14 +404,14 @@ export default function History() {
   // Session detail view
   if (selected) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-full flex-1 flex flex-col">
         <SessionDetail session={selected} onBack={() => setSelected(null)} />
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-full flex-1">
       {/* Header */}
       <div className="px-4 pt-6 pb-4">
         <h1 className="font-display text-2xl font-bold text-white tracking-wide">Histórico</h1>

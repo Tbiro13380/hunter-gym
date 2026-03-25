@@ -148,7 +148,7 @@ export default function WorkoutActive() {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0a0a0f]">
+    <div className="flex min-h-[100dvh] flex-1 flex-col bg-[#0a0a0f]">
       {/* Sticky header */}
       <div className="sticky top-0 z-30 bg-[#0a0a0f]/95 backdrop-blur-md border-b border-[#2a2a3a] px-4 py-3 flex items-center gap-3">
         {/* Cancel */}

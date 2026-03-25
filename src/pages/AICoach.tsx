@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useAICoach } from '../hooks/useAICoach'
 import { useUserStore } from '../store/userStore'
 import { useWorkoutStore } from '../store/workoutStore'
+import { supabase, SUPABASE_ENABLED } from '../lib/supabaseClient'
 import type { ChatMessage } from '../lib/types'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -114,24 +115,24 @@ function MarkdownText({ text }: { text: string }) {
   )
 }
 
-// ── API Key warning ────────────────────────────────────────────────────────
+// ── Coach indisponível (Supabase / sessão) ─────────────────────────────────
 
-function APIKeyWarning() {
+function CoachUnavailableWarning() {
   return (
     <div className="mx-4 my-4 bg-[#f59e0b]/10 border border-[#f59e0b]/30 rounded-2xl p-4">
       <div className="flex items-start gap-3">
         <span className="text-xl flex-shrink-0">⚠️</span>
         <div>
-          <p className="text-[#f59e0b] text-sm font-semibold mb-1">Chave da API não configurada</p>
+          <p className="text-[#f59e0b] text-sm font-semibold mb-1">Shadow Coach indisponível nesta sessão</p>
           <p className="text-[#64748b] text-xs leading-relaxed">
-            Para usar o Shadow Coach, adicione sua chave da OpenAI no arquivo{' '}
-            <code className="bg-[#1a1a26] text-[#06b6d4] px-1 py-0.5 rounded text-[10px]">.env</code>:
+            O coach roda numa Edge Function do Supabase com a chave OpenAI no servidor (não no app). É preciso{' '}
+            <strong className="text-[#94a3b8]">Supabase configurado</strong> e{' '}
+            <strong className="text-[#94a3b8]">login com conta Supabase</strong> (e-mail ou Google). Contas só
+            locais não enviam JWT para a função.
           </p>
-          <code className="block mt-2 bg-[#1a1a26] border border-[#2a2a3a] rounded-lg px-3 py-2 text-[#22c55e] text-xs font-mono-timer">
-            VITE_OPENAI_API_KEY=sk-...
-          </code>
           <p className="text-[#64748b] text-[10px] mt-2">
-            Após adicionar, reinicie o servidor de desenvolvimento.
+            Deploy: <code className="bg-[#1a1a26] px-1 rounded">supabase secrets set OPENAI_API_KEY=...</code>{' '}
+            e <code className="bg-[#1a1a26] px-1 rounded">supabase functions deploy shadow-coach</code>
           </p>
         </div>
       </div>
@@ -189,12 +190,29 @@ export default function AICoach() {
   const { sessions } = useWorkoutStore()
   const [input, setInput] = useState('')
   const [showQuickPrompts, setShowQuickPrompts] = useState(false)
+  const [canUseCoach, setCanUseCoach] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
-  const hasAPIKey =
-    import.meta.env.VITE_OPENAI_API_KEY &&
-    import.meta.env.VITE_OPENAI_API_KEY !== 'sua_chave_aqui'
+  useEffect(() => {
+    if (!SUPABASE_ENABLED || !supabase) {
+      setCanUseCoach(false)
+      return
+    }
+    let cancelled = false
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!cancelled) setCanUseCoach(!!session)
+    })
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_e, session) => {
+      setCanUseCoach(!!session)
+    })
+    return () => {
+      cancelled = true
+      subscription.unsubscribe()
+    }
+  }, [])
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -222,7 +240,7 @@ export default function AICoach() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-[#0a0a0f]">
+    <div className="flex min-h-[100dvh] flex-1 flex-col bg-[#0a0a0f]">
       {/* Header */}
       <div className="flex-shrink-0 px-4 pt-6 pb-4 border-b border-[#2a2a3a] bg-[#0a0a0f]">
         <div className="flex items-center justify-between">
@@ -235,7 +253,7 @@ export default function AICoach() {
               <div className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e] animate-pulse" />
                 <span className="text-[10px] text-[#64748b]">
-                  {hasAPIKey ? 'Online · GPT-4o mini' : 'API key necessária'}
+                  {canUseCoach ? 'Online · GPT-4o mini' : 'Login Supabase necessário'}
                 </span>
               </div>
             </div>
@@ -268,10 +286,10 @@ export default function AICoach() {
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto py-4 space-y-4">
         {/* API key warning */}
-        {!hasAPIKey && <APIKeyWarning />}
+        {!canUseCoach && <CoachUnavailableWarning />}
 
         {/* Welcome / analyze CTA */}
-        {messages.length === 0 && hasAPIKey && (
+        {messages.length === 0 && canUseCoach && (
           <>
             <WelcomeCard onAnalyze={analyzeProgress} loading={loading} />
 
@@ -371,7 +389,7 @@ export default function AICoach() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={loading ? 'Aguardando resposta...' : 'Pergunte ao Shadow Coach...'}
-              disabled={loading || !hasAPIKey}
+              disabled={loading || !canUseCoach}
               rows={1}
               className="w-full bg-transparent text-white placeholder-[#64748b] text-sm px-4 py-3 focus:outline-none resize-none max-h-32 disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ scrollbarWidth: 'none' }}
@@ -381,7 +399,7 @@ export default function AICoach() {
           {/* Send button */}
           <button
             onClick={handleSend}
-            disabled={!input.trim() || loading || !hasAPIKey}
+            disabled={!input.trim() || loading || !canUseCoach}
             className="w-10 h-10 flex items-center justify-center bg-[#7c3aed] hover:bg-[#6d28d9] disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl transition-all hover:shadow-[0_0_12px_rgba(124,58,237,0.4)] active:scale-95 flex-shrink-0 self-end"
             aria-label="Enviar"
           >

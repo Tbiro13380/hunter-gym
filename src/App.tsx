@@ -28,8 +28,10 @@ function AppShell() {
   const isFullscreen = FULLSCREEN_ROUTES.some((r) => location.pathname.startsWith(r))
 
   return (
-    <div className="flex flex-col min-h-[100dvh] bg-[#0a0a0f] max-w-lg mx-auto relative">
-      <main className={`flex-1 overflow-y-auto energy-grid ${isFullscreen ? '' : 'pb-20'}`}>
+    <div className="app-shell flex min-h-[100dvh] flex-col bg-[#0a0a0f] relative">
+      <main
+        className={`flex flex-1 flex-col min-h-0 overflow-y-auto energy-grid ${isFullscreen ? '' : 'pb-20'}`}
+      >
         <Routes location={location}>
           <Route path="/" element={<PageWrapper><Dashboard /></PageWrapper>} />
           <Route path="/treino" element={<PageWrapper><WorkoutSetup /></PageWrapper>} />
@@ -55,7 +57,7 @@ function AuthGate() {
 
   if (!authReady) {
     return (
-      <div className="min-h-[100dvh] bg-[#0a0a0f] flex flex-col items-center justify-center gap-3">
+      <div className="app-shell min-h-[100dvh] bg-[#0a0a0f] flex flex-col items-center justify-center gap-3">
         <div className="w-10 h-10 border-2 border-[#7c3aed] border-t-transparent rounded-full animate-spin" />
         <p className="text-sm text-[#64748b]">Carregando…</p>
       </div>

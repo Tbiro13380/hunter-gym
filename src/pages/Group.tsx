@@ -76,7 +76,7 @@ function NoGroupView({
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-full flex-1">
       <div className="px-4 pt-6 pb-4">
         <h1 className="font-display text-2xl font-bold text-white tracking-wide">Grupo</h1>
         <p className="text-[#64748b] text-sm mt-1">Treine junto com seus parceiros</p>
@@ -318,7 +318,7 @@ function GroupView({
   ]
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-full flex-1">
       {/* Header */}
       <div
         className="px-4 pt-6 pb-4 relative overflow-hidden"

@@ -20,7 +20,7 @@ function parseOAuthErrorFromUrl(): string | null {
   return parts.join(' — ')
 }
 
-const _sb = import.meta.env.VITE_SUPABASE_URL?.replace(/\/$/, '')
+const _sb = import.meta.env.SUPABASE_URL?.replace(/\/$/, '')
 const supabaseGoogleRedirectHint = _sb
   ? `${_sb}/auth/v1/callback`
   : 'https://SEU_PROJETO.supabase.co/auth/v1/callback'
@@ -52,7 +52,7 @@ export default function AuthCallback() {
 
   if (oauthError) {
     return (
-      <div className="min-h-[100dvh] bg-[#0a0a0f] flex flex-col items-center justify-center gap-4 px-6 text-center">
+      <div className="app-shell min-h-[100dvh] bg-[#0a0a0f] flex flex-col items-center justify-center gap-4 px-6 text-center">
         <p className="text-[#ef4444] text-sm font-medium max-w-md">Falha no login com Google</p>
         <p className="text-[#94a3b8] text-xs max-w-lg break-words">{oauthError}</p>
         <p className="text-[#64748b] text-[11px] max-w-md leading-relaxed">
@@ -74,7 +74,7 @@ export default function AuthCallback() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-[#0a0a0f] flex flex-col items-center justify-center gap-3 text-white">
+    <div className="app-shell min-h-[100dvh] bg-[#0a0a0f] flex flex-col items-center justify-center gap-3 text-white">
       <div className="w-8 h-8 border-2 border-[#7c3aed] border-t-transparent rounded-full animate-spin" />
       <p className="text-sm text-[#64748b]">Sincronizando sessão…</p>
     </div>

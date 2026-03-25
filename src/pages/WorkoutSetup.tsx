@@ -175,7 +175,7 @@ export default function WorkoutSetup() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-full flex-1">
       {/* Header */}
       <div className="px-4 pt-6 pb-4">
         <h1 className="font-display text-2xl font-bold text-white tracking-wide">Meu Split</h1>
@@ -288,7 +288,7 @@ function ExerciseListView({
   onSaveExercise,
 }: ExerciseListViewProps) {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-full flex-1">
       {/* Header */}
       <div className="px-4 pt-5 pb-3 flex items-center gap-3">
         <button

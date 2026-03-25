@@ -2,6 +2,7 @@ import { useState, useId } from 'react'
 import { useAuthStore } from '../store/authStore'
 import { useUserStore } from '../store/userStore'
 import { SUPABASE_ENABLED } from '../lib/supabaseClient'
+import HunterLogoMark from '../components/ui/HunterLogoMark'
 
 type Tab = 'login' | 'register'
 
@@ -101,7 +102,7 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-[#0a0a0f] flex flex-col items-center justify-center px-5 py-8 relative overflow-hidden">
+    <div className="app-shell min-h-[100dvh] bg-[#0a0a0f] flex flex-col items-center justify-center px-5 py-8 relative overflow-hidden">
 
       {/* Background orbs */}
       <div className="absolute top-0 -left-32 w-80 h-80 rounded-full bg-[#7c3aed]/8 blur-3xl pointer-events-none" />
@@ -109,10 +110,8 @@ export default function AuthPage() {
 
       {/* Logo */}
       <div className="flex flex-col items-center mb-8 animate-fade-in-up">
-        <div className="w-16 h-16 rounded-2xl bg-[#12121a] border-2 border-[#7c3aed]/50 flex items-center justify-center mb-3 animate-pulse-glow">
-          <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8 text-[#a855f7]" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-          </svg>
+        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[#12121a] border-2 border-[#7c3aed]/50 mb-3 animate-pulse-glow">
+          <HunterLogoMark className="h-8 w-8" />
         </div>
         <h1 className="font-display text-3xl font-bold tracking-widest bg-gradient-to-r from-[#a855f7] to-[#06b6d4] bg-clip-text text-transparent">
           HUNTER GYM

@@ -22,7 +22,10 @@ export default function PageWrapper({ children, className = '' }: PageWrapperPro
   }, [])
 
   return (
-    <div ref={ref} className={className}>
+    <div
+      ref={ref}
+      className={`flex flex-1 flex-col min-h-full w-full ${className}`}
+    >
       {children}
     </div>
   )

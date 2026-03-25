@@ -195,7 +195,7 @@ export default function Missions() {
   const totalCompleted = missions.filter((m) => m.completed).length
 
   return (
-    <div className="flex flex-col min-h-screen pb-6">
+    <div className="flex flex-col min-h-full flex-1 pb-6">
       {/* Header */}
       <div className="px-4 pt-6 pb-4">
         <h1 className="font-display text-2xl font-bold text-white tracking-wide">Missões</h1>

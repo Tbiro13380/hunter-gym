@@ -41,7 +41,7 @@ export default function GlobalLeaderboard() {
   }, [])
 
   return (
-    <div className="flex flex-col min-h-screen px-4 pt-6 pb-24">
+    <div className="flex flex-col min-h-full flex-1 px-4 pt-6 pb-24">
       <div className="flex items-center gap-3 mb-6">
         <Link to="/" className="text-[#64748b] hover:text-white transition-colors">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
