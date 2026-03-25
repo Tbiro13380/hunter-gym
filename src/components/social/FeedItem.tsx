@@ -1,4 +1,5 @@
 import type { FeedEvent } from '../../lib/types'
+import { RANK_COLORS } from '../../lib/gamificationLogic'
 
 type FeedItemProps = {
   event: FeedEvent
@@ -6,110 +7,121 @@ type FeedItemProps = {
   onReact?: (eventId: string, emoji: string) => void
 }
 
-const EMOJIS = ['🔥', '👊', '⚔️']
+const REACTIONS = ['🔥', '👊', '⚔️']
 
 function formatTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
   const mins = Math.floor(diff / 60000)
   const hours = Math.floor(diff / 3600000)
   const days = Math.floor(diff / 86400000)
-  if (days > 0) return `${days}d atrás`
-  if (hours > 0) return `${hours}h atrás`
-  if (mins > 0) return `${mins}min atrás`
-  return 'agora'
+  if (days > 0) return `${days}D AGO`
+  if (hours > 0) return `${hours}H AGO`
+  if (mins > 0) return `${mins}M AGO`
+  return 'NOW'
 }
 
-function formatFeedMessage(event: FeedEvent): { icon: string; text: string } {
+function formatFeedMessage(event: FeedEvent): { icon: string; text: string; accentKey?: string; accentVal?: string } {
   const p = event.payload
   switch (event.type) {
     case 'rank_up':
-      return {
-        icon: '⚔️',
-        text: `subiu de Rank ${String(p.oldRank)} → ${String(p.newRank)}`,
-      }
+      return { icon: '⚔️', text: `ranked up`, accentKey: 'RANK', accentVal: `${String(p.oldRank)} → ${String(p.newRank)}` }
     case 'pr_broken':
-      return {
-        icon: '💪',
-        text: `quebrou o PR no ${String(p.exercise)}: ${String(p.oldPR)}kg → ${String(p.newPR)}kg`,
-      }
+      return { icon: '💪', text: `new PR on ${String(p.exercise)}`, accentKey: 'WEIGHT', accentVal: `${String(p.oldPR)}kg → ${String(p.newPR)}kg` }
     case 'streak_milestone':
-      return {
-        icon: '🔥',
-        text: `está em chamas: ${String(p.days)} dias de streak`,
-      }
+      return { icon: '🔥', text: `is on fire`, accentKey: 'STREAK', accentVal: `${String(p.days)} DAYS` }
     case 'dungeon_cleared':
-      return {
-        icon: '🏰',
-        text: `completou a dungeon '${String(p.dungeon)}'`,
-      }
+      return { icon: '🏰', text: `cleared dungeon`, accentKey: 'TARGET', accentVal: String(p.dungeon) }
     case 'title_unlocked':
-      return {
-        icon: '👑',
-        text: `desbloqueou o título '${String(p.title)}'`,
-      }
+      return { icon: '👑', text: `unlocked title`, accentKey: 'TITLE', accentVal: String(p.title) }
     case 'volume_king':
-      return {
-        icon: '📊',
-        text: 'é o Volume King dessa semana',
-      }
+      return { icon: '📊', text: `is VOLUME KING this week`, accentKey: undefined, accentVal: undefined }
     case 'streak_broken':
-      return {
-        icon: '💀',
-        text: `quebrou o streak de ${String(p.days)} dias`,
-      }
+      return { icon: '💀', text: `broke their streak`, accentKey: 'DAYS LOST', accentVal: String(p.days) }
     default:
-      return { icon: '⚡', text: 'realizou uma conquista' }
+      return { icon: '⚡', text: 'achieved something', accentKey: undefined, accentVal: undefined }
   }
 }
 
 export default function FeedItem({ event, currentUserId, onReact }: FeedItemProps) {
-  const { icon, text } = formatFeedMessage(event)
+  const { icon, text, accentKey, accentVal } = formatFeedMessage(event)
 
-  // Group reactions by emoji
-  const reactionGroups = EMOJIS.map((emoji) => ({
+  const reactionGroups = REACTIONS.map((emoji) => ({
     emoji,
     count: event.reactions.filter((r) => r.emoji === emoji).length,
     reacted: event.reactions.some((r) => r.userId === currentUserId && r.emoji === emoji),
   }))
 
-  return (
-    <div className="flex gap-3 animate-slide-in-left">
-      {/* Avatar */}
-      <div className="w-8 h-8 rounded-full bg-[#1a1a26] border border-[#2a2a3a] flex items-center justify-center flex-shrink-0 font-bold text-sm text-[#a855f7]">
-        {event.userName.charAt(0).toUpperCase()}
-      </div>
+  // Avatar rank color
+  const rankColor = '#7c3aed'
 
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="bg-[#12121a] border border-[#2a2a3a] rounded-2xl rounded-tl-none px-3.5 py-3">
-          <p className="text-sm text-[#f1f5f9] leading-snug">
-            <span className="text-[#a855f7] font-semibold">{event.userName}</span>{' '}
-            <span className="mr-1">{icon}</span>
-            {text}
-          </p>
+  return (
+    <div
+      className="card-tactical animate-slide-in-left hover:bg-[#2a292f] transition-colors group"
+      style={{ borderLeft: '3px solid #4a4455' }}
+    >
+      <div className="flex gap-4 p-4">
+        {/* Avatar */}
+        <div className="relative flex-shrink-0">
+          <div
+            className="w-10 h-10 flex items-center justify-center font-bold text-sm font-display"
+            style={{
+              background: `${rankColor}20`,
+              border: `2px solid ${rankColor}60`,
+              color: rankColor,
+            }}
+          >
+            {event.userName.charAt(0).toUpperCase()}
+          </div>
+          <div
+            className="absolute -bottom-1 -right-1 px-1 font-mono-timer font-bold"
+            style={{ fontSize: '8px', background: RANK_COLORS['E'], color: '#131318' }}
+          >
+            E
+          </div>
         </div>
 
-        {/* Reactions + time */}
-        <div className="flex items-center gap-2 mt-1.5 px-1">
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between mb-1.5">
+            <span className="font-mono-timer text-sm font-bold" style={{ color: '#4cd7f6' }}>
+              {event.userName}
+            </span>
+            <span className="sys-label text-[#958da1] flex-shrink-0 ml-2">{formatTime(event.createdAt)}</span>
+          </div>
+
+          <p className="text-[#e4e1e9] text-sm leading-relaxed">
+            <span className="mr-1">{icon}</span>
+            {text}
+            {accentKey && accentVal && (
+              <>
+                {' — '}
+                <span className="sys-label text-[#efc200]">{accentKey}:</span>
+                {' '}
+                <span className="font-mono-timer text-xs font-bold text-[#e4e1e9]">{accentVal}</span>
+              </>
+            )}
+          </p>
+
+          {/* Reactions */}
           {onReact && (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2 mt-2.5">
               {reactionGroups.map(({ emoji, count, reacted }) => (
                 <button
                   key={emoji}
                   onClick={() => onReact(event.id, emoji)}
-                  className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border transition-all ${
-                    reacted
-                      ? 'bg-[#7c3aed]/20 border-[#7c3aed]/40 text-[#a855f7]'
-                      : 'bg-[#1a1a26] border-[#2a2a3a] text-[#64748b] hover:border-[#64748b]'
-                  }`}
+                  className="flex items-center gap-1 px-2 py-0.5 transition-all"
+                  style={{
+                    background: reacted ? '#7c3aed20' : 'transparent',
+                    border: `1px solid ${reacted ? '#7c3aed60' : '#4a4455'}`,
+                    color: reacted ? '#a855f7' : '#958da1',
+                  }}
                 >
-                  <span>{emoji}</span>
-                  {count > 0 && <span>{count}</span>}
+                  <span className="text-xs">{emoji}</span>
+                  {count > 0 && <span className="sys-label">{count}</span>}
                 </button>
               ))}
             </div>
           )}
-          <span className="text-[10px] text-[#64748b] ml-auto">{formatTime(event.createdAt)}</span>
         </div>
       </div>
     </div>

@@ -12,23 +12,23 @@ type RankBadgeProps = {
   className?: string
 }
 
-const SIZE_CONFIG: Record<RankBadgeSize, { box: string; text: string; ring: string }> = {
-  xs: { box: 'w-6 h-6',   text: 'text-[10px]', ring: 'ring-1' },
-  sm: { box: 'w-8 h-8',   text: 'text-xs',     ring: 'ring-1' },
-  md: { box: 'w-11 h-11', text: 'text-sm',     ring: 'ring-2' },
-  lg: { box: 'w-16 h-16', text: 'text-xl',     ring: 'ring-2' },
-  xl: { box: 'w-24 h-24', text: 'text-3xl',    ring: 'ring-[3px]' },
+const SIZE_CONFIG: Record<RankBadgeSize, { box: string; text: string }> = {
+  xs: { box: 'w-6 h-6',   text: 'text-[10px]' },
+  sm: { box: 'w-8 h-8',   text: 'text-xs'     },
+  md: { box: 'w-11 h-11', text: 'text-sm'     },
+  lg: { box: 'w-16 h-16', text: 'text-xl'     },
+  xl: { box: 'w-24 h-24', text: 'text-3xl'    },
 }
 
 const RANK_DESCRIPTIONS: Record<HunterRank, string> = {
-  E: 'Iniciante',
-  D: 'Recruta',
-  C: 'Caçador',
-  B: 'Elite',
-  A: 'Veterano',
-  S: 'Lenda',
-  National: 'Nacional',
-  Monarch: 'Monarca',
+  E: 'INITIATE',
+  D: 'RECRUIT',
+  C: 'HUNTER',
+  B: 'ELITE',
+  A: 'VETERAN',
+  S: 'LEGEND',
+  National: 'NATIONAL',
+  Monarch: 'MONARCH',
 }
 
 export default function RankBadge({
@@ -40,40 +40,38 @@ export default function RankBadge({
   className = '',
 }: RankBadgeProps) {
   const color = RANK_COLORS[rank]
-  const { box, text, ring } = SIZE_CONFIG[size]
+  const { box, text } = SIZE_CONFIG[size]
   const isMonarch = rank === 'Monarch'
 
   return (
     <div className={`flex flex-col items-center gap-1 ${className}`}>
       <div
         className={`
-          ${box} rounded-xl flex items-center justify-center font-display font-bold
-          ${ring} transition-all duration-300
+          ${box} flex items-center justify-center font-display font-bold
+          transition-all duration-300
           ${pulse ? 'animate-rank-pulse' : ''}
           ${glow ? 'animate-pulse-glow' : ''}
           ${isMonarch ? 'rank-monarch-gradient' : ''}
         `}
         style={{
           color,
-          borderColor: `${color}60`,
-          boxShadow: glow ? `0 0 16px ${color}50` : undefined,
-          background: isMonarch
-            ? undefined
-            : `linear-gradient(135deg, ${color}15 0%, ${color}08 100%)`,
+          border: `2px solid ${color}60`,
+          background: isMonarch ? undefined : `${color}15`,
+          boxShadow: glow ? `0 0 16px ${color}50, inset 0 0 20px ${color}08` : undefined,
         }}
       >
         {isMonarch ? (
-          <span className={`${text} bg-gradient-to-br from-[#a855f7] via-[#f59e0b] to-[#a855f7] bg-clip-text text-transparent`}>
+          <span className={`${text} bg-gradient-to-br from-[#a855f7] via-[#efc200] to-[#a855f7] bg-clip-text text-transparent font-black`}>
             M
           </span>
         ) : (
-          <span className={text} style={{ color }}>
+          <span className={`${text} font-black`} style={{ color }}>
             {rank === 'National' ? 'N' : rank}
           </span>
         )}
       </div>
       {showLabel && (
-        <span className="text-[10px] text-[#64748b] font-medium">{RANK_DESCRIPTIONS[rank]}</span>
+        <span className="sys-label text-[#958da1]">{RANK_DESCRIPTIONS[rank]}</span>
       )}
     </div>
   )

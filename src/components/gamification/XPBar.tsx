@@ -13,8 +13,8 @@ export default function XPBar({ xp, rank, compact = false }: XPBarProps) {
   const { current, needed, percentage } = getXPProgress(xp)
   const nextRank = getNextRank(rank)
   const barRef = useRef<HTMLDivElement>(null)
+  const rankColor = RANK_COLORS[rank]
 
-  // Animate fill on mount
   useEffect(() => {
     if (!barRef.current) return
     const el = barRef.current
@@ -29,14 +29,17 @@ export default function XPBar({ xp, rank, compact = false }: XPBarProps) {
   if (compact) {
     return (
       <div className="flex items-center gap-2">
-        <div className="flex-1 h-1.5 bg-[#1a1a26] rounded-full overflow-hidden">
+        <div className="flex-1 h-1 relative" style={{ background: '#35343a' }}>
           <div
             ref={barRef}
-            className="h-full rounded-full transition-all duration-1000 ease-out"
-            style={{ background: `linear-gradient(90deg, ${RANK_COLORS[rank]}, ${nextRank ? RANK_COLORS[nextRank] : RANK_COLORS[rank]})` }}
+            className="absolute top-0 left-0 h-full stripe-bar transition-all duration-1000 ease-out"
+            style={{
+              background: rankColor,
+              boxShadow: `0 0 6px ${rankColor}60`,
+            }}
           />
         </div>
-        <span className="text-[10px] text-[#64748b] whitespace-nowrap tabular-nums">
+        <span className="sys-label text-[#958da1] whitespace-nowrap tabular-nums">
           {current}/{needed}
         </span>
       </div>
@@ -44,48 +47,47 @@ export default function XPBar({ xp, rank, compact = false }: XPBarProps) {
   }
 
   return (
-    <div className="bg-[#12121a] border border-[#2a2a3a] rounded-2xl p-4">
+    <div className="card-tactical card-tactical-primary p-4">
       {/* Rank row */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
           <RankBadge rank={rank} size="sm" glow />
           <div>
-            <p className="text-white text-sm font-semibold">Rank {rank}</p>
-            <p className="text-[#64748b] text-xs">{xp.toLocaleString('pt-BR')} XP total</p>
+            <p className="font-display text-sm font-semibold text-[#e4e1e9] tracking-widest">RANK {rank}</p>
+            <p className="sys-label text-[#958da1]">{xp.toLocaleString('pt-BR')} XP TOTAL</p>
           </div>
         </div>
         {nextRank ? (
           <div className="flex items-center gap-2">
-            <span className="text-[#64748b] text-xs">próximo</span>
+            <span className="sys-label text-[#958da1]">NEXT</span>
             <RankBadge rank={nextRank} size="xs" />
           </div>
         ) : (
-          <span className="text-[#f59e0b] text-xs font-display font-bold">MÁXIMO</span>
+          <span className="sys-label" style={{ color: '#efc200' }}>MAX RANK</span>
         )}
       </div>
 
       {/* Progress bar */}
       <div className="flex items-center gap-3">
-        <div className="flex-1 h-3 bg-[#1a1a26] rounded-full overflow-hidden border border-[#2a2a3a]">
+        <div className="flex-1 h-3 relative" style={{ background: '#35343a' }}>
           <div
             ref={barRef}
-            className="h-full rounded-full transition-all duration-1000 ease-out relative overflow-hidden"
+            className="absolute top-0 left-0 h-full stripe-bar transition-all duration-1000 ease-out"
             style={{
-              background: `linear-gradient(90deg, ${RANK_COLORS[rank]}, ${nextRank ? RANK_COLORS[nextRank] : RANK_COLORS[rank]})`,
+              background: nextRank
+                ? `linear-gradient(90deg, ${rankColor}, ${RANK_COLORS[nextRank]})`
+                : rankColor,
+              boxShadow: `0 0 10px ${rankColor}50`,
             }}
-          >
-            {/* Shimmer effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-[shimmer_2s_infinite]" />
-          </div>
+          />
         </div>
-        <span className="text-xs text-[#64748b] tabular-nums whitespace-nowrap">
+        <span className="sys-label text-[#958da1] tabular-nums whitespace-nowrap">
           {current.toLocaleString('pt-BR')}/{needed.toLocaleString('pt-BR')}
         </span>
       </div>
 
-      {/* Percentage */}
-      <p className="text-[10px] text-[#64748b] mt-1.5 text-right">
-        {percentage.toFixed(1)}% para Rank {nextRank ?? rank}
+      <p className="sys-label text-[#958da1] mt-2 text-right">
+        {percentage.toFixed(1)}% → RANK {nextRank ?? rank}
       </p>
     </div>
   )

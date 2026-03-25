@@ -10,58 +10,19 @@ type StatBarsProps = {
 type StatConfig = {
   key: keyof HunterStats
   label: string
-  description: string
+  fullLabel: string
   color: string
-  icon: string
 }
 
 const STAT_CONFIG: StatConfig[] = [
-  {
-    key: 'STR',
-    label: 'STR',
-    description: 'Força — volume de empurrar acumulado',
-    color: '#ef4444',
-    icon: '⚔️',
-  },
-  {
-    key: 'END',
-    label: 'END',
-    description: 'Resistência — consistência semanal',
-    color: '#22c55e',
-    icon: '🛡️',
-  },
-  {
-    key: 'AGI',
-    label: 'AGI',
-    description: 'Agilidade — eficiência do treino',
-    color: '#06b6d4',
-    icon: '⚡',
-  },
-  {
-    key: 'VIT',
-    label: 'VIT',
-    description: 'Vitalidade — frequência semanal',
-    color: '#f59e0b',
-    icon: '💛',
-  },
-  {
-    key: 'INT',
-    label: 'INT',
-    description: 'Inteligência — variedade de exercícios',
-    color: '#a855f7',
-    icon: '📖',
-  },
+  { key: 'STR', label: 'STR', fullLabel: 'STRENGTH',   color: '#ef4444' },
+  { key: 'END', label: 'END', fullLabel: 'ENDURANCE',  color: '#4cd7f6' },
+  { key: 'AGI', label: 'AGI', fullLabel: 'AGILITY',    color: '#4cd7f6' },
+  { key: 'VIT', label: 'VIT', fullLabel: 'VITALITY',   color: '#efc200' },
+  { key: 'INT', label: 'INT', fullLabel: 'INTELLECT',  color: '#a855f7' },
 ]
 
-function SingleBar({
-  config,
-  value,
-  animate,
-}: {
-  config: StatConfig
-  value: number
-  animate: boolean
-}) {
+function SingleBar({ config, value, animate }: { config: StatConfig; value: number; animate: boolean }) {
   const barRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -69,10 +30,8 @@ function SingleBar({
     const el = barRef.current
     if (animate) {
       el.style.width = '0%'
-      const timer = setTimeout(() => {
-        el.style.width = `${value}%`
-      }, 100)
-      return () => clearTimeout(timer)
+      const t = setTimeout(() => { el.style.width = `${value}%` }, 80)
+      return () => clearTimeout(t)
     } else {
       el.style.width = `${value}%`
     }
@@ -80,28 +39,32 @@ function SingleBar({
 
   return (
     <div className="flex items-center gap-3">
-      {/* Label */}
+      {/* Stat label */}
       <span
-        className="font-display font-bold text-xs w-7 flex-shrink-0 text-right"
+        className="font-mono-timer text-xs font-bold w-8 flex-shrink-0 text-right"
         style={{ color: config.color }}
       >
         {config.label}
       </span>
 
       {/* Bar track */}
-      <div className="flex-1 h-3 bg-[#1a1a26] rounded-full overflow-hidden border border-[#2a2a3a] relative">
+      <div className="flex-1 h-2 relative" style={{ background: '#35343a' }}>
+        {/* Fill */}
         <div
           ref={barRef}
-          className="h-full rounded-full transition-all duration-1000 ease-out relative overflow-hidden"
-          style={{ background: `linear-gradient(90deg, ${config.color}cc, ${config.color})` }}
-        >
-          {/* Shine */}
-          <div className="absolute inset-y-0 left-0 right-0 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
-        </div>
+          className="absolute top-0 left-0 h-full stripe-bar transition-all duration-1000 ease-out overflow-hidden"
+          style={{
+            background: `linear-gradient(90deg, ${config.color}cc, ${config.color})`,
+            boxShadow: `0 0 8px ${config.color}60`,
+          }}
+        />
       </div>
 
       {/* Value */}
-      <span className="text-xs font-mono-timer w-7 flex-shrink-0 text-right" style={{ color: config.color }}>
+      <span
+        className="font-mono-timer text-xs font-bold w-8 flex-shrink-0 tabular-nums"
+        style={{ color: config.color }}
+      >
         {value}
       </span>
     </div>
@@ -115,12 +78,13 @@ export default function StatBars({ stats, animate = true, compact = false }: Sta
         {STAT_CONFIG.map((cfg) => (
           <div
             key={cfg.key}
-            className="flex flex-col items-center px-2.5 py-1.5 rounded-lg bg-[#1a1a26] border border-[#2a2a3a] min-w-[3rem]"
+            className="flex flex-col items-center px-2.5 py-1.5 border"
+            style={{ background: '#1b1b20', borderColor: `${cfg.color}30` }}
           >
-            <span className="font-display font-bold text-xs" style={{ color: cfg.color }}>
+            <span className="font-mono-timer font-bold text-[10px]" style={{ color: cfg.color }}>
               {cfg.label}
             </span>
-            <span className="text-white font-mono-timer text-xs font-bold">{stats[cfg.key]}</span>
+            <span className="font-mono-timer text-xs font-bold text-[#e4e1e9]">{stats[cfg.key]}</span>
           </div>
         ))}
       </div>
@@ -128,19 +92,30 @@ export default function StatBars({ stats, animate = true, compact = false }: Sta
   }
 
   return (
-    <div className="bg-[#12121a] border border-[#2a2a3a] rounded-2xl p-4">
-      <p className="text-[#64748b] text-xs uppercase tracking-wider font-medium mb-4">
-        Atributos do Caçador
-      </p>
+    <div className="card-tactical card-tactical-accent p-4">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <span className="sys-label text-[#958da1]">HUNTER ATTRIBUTES</span>
+        <span className="sys-label text-[#4cd7f6]">SYSTEM LEVEL</span>
+      </div>
+
       <div className="flex flex-col gap-3">
-        {STAT_CONFIG.map((cfg) => (
-          <SingleBar
-            key={cfg.key}
-            config={cfg}
-            value={stats[cfg.key]}
-            animate={animate}
-          />
-        ))}
+        {STAT_CONFIG.map((cfg) => {
+          const val = stats[cfg.key]
+          return (
+            <div key={cfg.key} className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="sys-label text-[#958da1]">
+                  {cfg.fullLabel} ({cfg.label})
+                </span>
+                <span className="sys-label" style={{ color: cfg.color }}>
+                  {val} / 100
+                </span>
+              </div>
+              <SingleBar config={cfg} value={val} animate={animate} />
+            </div>
+          )
+        })}
       </div>
     </div>
   )

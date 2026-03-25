@@ -11,11 +11,11 @@ type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const VARIANTS: Record<ButtonVariant, string> = {
   primary:
-    'bg-[#7c3aed] hover:bg-[#6d28d9] text-white hover:shadow-[0_0_16px_rgba(124,58,237,0.4)] active:scale-95',
+    'bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-mono-timer tracking-widest animate-pulse-cta active:scale-95',
   secondary:
-    'bg-[#1a1a26] hover:bg-[#2a2a3a] text-white border border-[#2a2a3a] hover:border-[#7c3aed] active:scale-95',
+    'bg-[#1f1f25] hover:bg-[#2a292f] text-[#e4e1e9] border border-[#4a4455] hover:border-[#7c3aed] active:scale-95',
   ghost:
-    'bg-transparent hover:bg-[#1a1a26] text-[#64748b] hover:text-white active:scale-95',
+    'bg-transparent hover:bg-[#1f1f25] text-[#958da1] hover:text-[#e4e1e9] active:scale-95',
   danger:
     'bg-[#ef4444]/10 hover:bg-[#ef4444]/20 text-[#ef4444] border border-[#ef4444]/30 active:scale-95',
   success:
@@ -25,7 +25,7 @@ const VARIANTS: Record<ButtonVariant, string> = {
 const SIZES: Record<ButtonSize, string> = {
   sm: 'px-3 py-1.5 text-xs gap-1.5',
   md: 'px-4 py-2.5 text-sm gap-2',
-  lg: 'px-5 py-3 text-base gap-2',
+  lg: 'px-5 py-3 text-sm gap-2',
 }
 
 export default function Button({
@@ -44,13 +44,14 @@ export default function Button({
       {...props}
       disabled={disabled || loading}
       className={`
-        inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200
+        inline-flex items-center justify-center font-semibold transition-all duration-150
         ${VARIANTS[variant]}
         ${SIZES[size]}
         ${fullWidth ? 'w-full' : ''}
-        ${disabled || loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+        ${disabled || loading ? 'opacity-50 cursor-not-allowed !animation-none' : 'cursor-pointer'}
         ${className}
       `}
+      style={variant === 'primary' && !disabled && !loading ? undefined : { animation: 'none' }}
     >
       {loading ? (
         <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">

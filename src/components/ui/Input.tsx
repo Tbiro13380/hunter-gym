@@ -6,18 +6,20 @@ type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
 
 export default function Input({ label, error, hint, className = '', ...props }: InputProps) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1.5">
       {label && (
-        <label className="text-xs font-medium text-[#64748b] uppercase tracking-wider">
+        <label className="sys-label text-[#958da1]">
           {label}
         </label>
       )}
       <input
         {...props}
-        className={`bg-[#1a1a26] border ${error ? 'border-[#ef4444]' : 'border-[#2a2a3a]'} rounded-xl px-3 py-2.5 text-white placeholder-[#64748b] text-sm focus:outline-none focus:border-[#7c3aed] focus:ring-1 focus:ring-[#7c3aed] transition-colors ${className}`}
+        className={`bg-[#1b1b20] border ${
+          error ? 'border-[#ef4444]' : 'border-[#4a4455]'
+        } px-3 py-2.5 text-[#e4e1e9] placeholder-[#4a4455] text-sm focus:outline-none focus:border-[#7c3aed] transition-colors font-mono-timer ${className}`}
       />
-      {error && <p className="text-[#ef4444] text-xs">{error}</p>}
-      {hint && !error && <p className="text-[#64748b] text-xs">{hint}</p>}
+      {error && <p className="sys-label text-[#ef4444]">{error}</p>}
+      {hint && !error && <p className="sys-label text-[#958da1]">{hint}</p>}
     </div>
   )
 }

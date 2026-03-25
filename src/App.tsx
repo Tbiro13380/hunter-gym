@@ -21,7 +21,7 @@ function AppShell() {
 
   return (
     <div className="flex flex-col min-h-[100dvh] bg-[#0a0a0f] max-w-lg mx-auto relative">
-      <main className={`flex-1 overflow-y-auto ${isFullscreen ? '' : 'pb-20'}`}>
+      <main className={`flex-1 overflow-y-auto energy-grid ${isFullscreen ? '' : 'pb-20'}`}>
         <Routes location={location}>
           <Route path="/" element={<PageWrapper><Dashboard /></PageWrapper>} />
           <Route path="/treino" element={<PageWrapper><WorkoutSetup /></PageWrapper>} />

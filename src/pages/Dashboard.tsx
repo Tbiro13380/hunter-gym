@@ -39,22 +39,30 @@ function getNextWorkoutLabel(sessions: { templateId: string; date: string }[], t
 
 function StatCard({ label, value, icon, color }: { label: string; value: string; icon: string; color: string }) {
   return (
-    <div className="flex flex-col gap-1 bg-[#12121a] border border-[#2a2a3a] rounded-2xl p-3.5">
+    <div
+      className="flex flex-col gap-1 p-3.5"
+      style={{ background: '#1f1f25', border: `1px solid #4a4455`, borderLeft: `3px solid ${color}` }}
+    >
       <div className="flex items-center justify-between">
         <span className="text-base">{icon}</span>
-        <span className="text-[10px] text-[#64748b] uppercase tracking-wider font-medium">{label}</span>
+        <span className="sys-label text-[#958da1]">{label}</span>
       </div>
-      <p className="font-bold text-xl font-mono-timer" style={{ color }}>{value}</p>
+      <p className="font-mono-timer font-bold text-xl" style={{ color }}>{value}</p>
     </div>
   )
 }
 
-function SectionHeader({ title, to, linkLabel = 'Ver tudo' }: { title: string; to?: string; linkLabel?: string }) {
+function SectionHeader({ title, to, linkLabel = 'VIEW ALL' }: { title: string; to?: string; linkLabel?: string }) {
   return (
     <div className="flex items-center justify-between mb-3">
-      <h2 className="text-white font-semibold text-sm uppercase tracking-wider">{title}</h2>
+      <h2
+        className="font-display text-sm font-bold tracking-widest uppercase text-[#e4e1e9]"
+        style={{ borderLeft: '3px solid #7c3aed', paddingLeft: '10px' }}
+      >
+        {title}
+      </h2>
       {to && (
-        <Link to={to} className="text-[#7c3aed] text-xs font-medium hover:text-[#a855f7] transition-colors">
+        <Link to={to} className="sys-label text-[#7c3aed] hover:text-[#a855f7] transition-colors">
           {linkLabel} →
         </Link>
       )}
