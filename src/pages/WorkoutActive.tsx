@@ -39,10 +39,12 @@ export default function WorkoutActive() {
   // PR tracking within current session
   const [sessionPRs, setSessionPRs] = useState<Set<string>>(new Set())
 
-  // Redirect if no active session
+  // Redirect only when não há treino ativo nem modal de resumo (evita tela preta ao encerrar)
   useEffect(() => {
-    if (!activeSession) navigate('/treino', { replace: true })
-  }, [activeSession, navigate])
+    if (!activeSession && !summary) {
+      navigate('/treino', { replace: true })
+    }
+  }, [activeSession, summary, navigate])
 
   // Get the template for this session
   const template = templates.find((t) => t.id === activeSession?.templateId)
@@ -50,6 +52,19 @@ export default function WorkoutActive() {
   // Batch progression data for all exercises
   const exerciseIds = template?.exercises.map((e) => e.id) ?? []
   const progressions = useProgressionBatch(exerciseIds)
+
+  if (summary) {
+    return (
+      <div className="flex min-h-[100dvh] flex-1 flex-col bg-[#0a0a0f]">
+        <WorkoutSummaryModal
+          session={summary.session}
+          xpGained={summary.xpGained}
+          events={summary.events}
+          onClose={handleSummaryClose}
+        />
+      </div>
+    )
+  }
 
   if (!activeSession || !template) return null
 
@@ -268,15 +283,6 @@ export default function WorkoutActive() {
         </div>
       </Modal>
 
-      {/* Summary modal */}
-      {summary && (
-        <WorkoutSummaryModal
-          session={summary.session}
-          xpGained={summary.xpGained}
-          events={summary.events}
-          onClose={handleSummaryClose}
-        />
-      )}
     </div>
   )
 }

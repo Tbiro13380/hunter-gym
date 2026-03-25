@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useUserStore } from '../store/userStore'
 import { useAuthStore } from '../store/authStore'
 import { SUPABASE_ENABLED } from '../lib/supabaseClient'
+import { pushGameToCloud } from '../services/cloudSync'
 import HunterLogoMark from '../components/ui/HunterLogoMark'
 
 export default function Onboarding() {
@@ -20,7 +21,12 @@ export default function Onboarding() {
     }
     setSubmitted(true)
     const uid = SUPABASE_ENABLED && session ? session.accountId : undefined
-    setTimeout(() => initProfile(trimmed, uid), 600)
+    setTimeout(() => {
+      initProfile(trimmed, uid)
+      if (SUPABASE_ENABLED && uid) {
+        void pushGameToCloud(uid)
+      }
+    }, 600)
   }
 
   return (

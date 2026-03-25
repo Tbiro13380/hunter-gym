@@ -72,12 +72,17 @@ export async function pullGameFromCloud(userId: string): Promise<boolean> {
       total_sessions: number
       game_onboarded?: boolean
     }
+    const localBefore = useUserStore.getState()
+    const sameUserHadOnboarding =
+      localBefore.profile?.id === userId && localBefore.isOnboarded
+    const mergedOnboarded = !!row.game_onboarded || sameUserHadOnboarding
+
     const profile = mapRowToProfile({
       ...row,
       game_onboarded: row.game_onboarded ?? false,
     })
     useUserStore.getState().setProfile(profile)
-    useUserStore.setState({ isOnboarded: !!row.game_onboarded })
+    useUserStore.setState({ isOnboarded: mergedOnboarded })
   }
 
   if (game) {
@@ -103,6 +108,10 @@ export async function pullGameFromCloud(userId: string): Promise<boolean> {
         lastMissionReset: gm.lastMissionReset ?? null,
       })
     }
+  }
+
+  if (useWorkoutStore.getState().sessions.length > 0) {
+    useUserStore.setState({ isOnboarded: true })
   }
 
   useUserStore.getState().recalculateStats(useWorkoutStore.getState().sessions)
