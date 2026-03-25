@@ -1,7 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { useAuthStore } from './store/authStore'
 import { useUserStore } from './store/userStore'
 import BottomNav from './components/ui/BottomNav'
-import Onboarding from './pages/Onboarding'
+import AuthPage from './pages/AuthPage'
 import Dashboard from './pages/Dashboard'
 import WorkoutSetup from './pages/WorkoutSetup'
 import WorkoutActive from './pages/WorkoutActive'
@@ -12,7 +13,6 @@ import Missions from './pages/Missions'
 import AICoach from './pages/AICoach'
 import PageWrapper from './components/ui/PageWrapper'
 
-// Full-screen pages without BottomNav
 const FULLSCREEN_ROUTES = ['/treino/ativo', '/coach']
 
 function AppShell() {
@@ -40,11 +40,15 @@ function AppShell() {
 }
 
 export default function App() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const isOnboarded = useUserStore((s) => s.isOnboarded)
+
+  // User is ready when authenticated AND has a game profile
+  const isReady = isAuthenticated && isOnboarded
 
   return (
     <BrowserRouter>
-      {isOnboarded ? <AppShell /> : <Onboarding />}
+      {isReady ? <AppShell /> : <AuthPage />}
     </BrowserRouter>
   )
 }

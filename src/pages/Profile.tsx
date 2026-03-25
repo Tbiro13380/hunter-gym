@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useUserStore } from '../store/userStore'
 import { useWorkoutStore } from '../store/workoutStore'
+import { useAuthStore } from '../store/authStore'
 import {
   ALL_TITLES,
   RANK_ORDER,
@@ -358,10 +359,10 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* ── DANGER ZONE ── */}
+        {/* ── CONTA ── */}
         <div className="bg-[#12121a] border border-[#2a2a3a] rounded-2xl p-4">
           <p className="text-[#64748b] text-xs uppercase tracking-wider font-medium mb-3">Conta</p>
-          <ResetConfirmButton />
+          <AccountSection />
         </div>
       </div>
 
@@ -441,46 +442,72 @@ export default function Profile() {
   )
 }
 
-// ── Reset button with confirmation ────────────────────────────────────────
+// ── Account section with logout + reset ───────────────────────────────────
 
-function ResetConfirmButton() {
-  const [confirm, setConfirm] = useState(false)
+function AccountSection() {
+  const [confirmReset, setConfirmReset] = useState(false)
+  const session = useAuthStore((s) => s.session)
+  const logout = useAuthStore((s) => s.logout)
+
+  function handleLogout() {
+    logout()
+  }
 
   function handleReset() {
     localStorage.clear()
     window.location.reload()
   }
 
-  if (confirm) {
-    return (
-      <div className="flex flex-col gap-3">
-        <p className="text-[#ef4444] text-xs font-medium">
-          ⚠️ Isso apagará todo o progresso, treinos e dados permanentemente.
-        </p>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setConfirm(false)}
-            className="flex-1 bg-[#1a1a26] border border-[#2a2a3a] text-[#64748b] text-xs font-medium py-2 rounded-lg transition-all hover:text-white"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={handleReset}
-            className="flex-1 bg-[#ef4444]/20 border border-[#ef4444]/40 text-[#ef4444] text-xs font-semibold py-2 rounded-lg transition-all hover:bg-[#ef4444]/30"
-          >
-            Confirmar reset
-          </button>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <button
-      onClick={() => setConfirm(true)}
-      className="w-full bg-[#ef4444]/10 hover:bg-[#ef4444]/15 border border-[#ef4444]/20 text-[#ef4444] text-xs font-medium py-2.5 rounded-xl transition-all"
-    >
-      Resetar todos os dados
-    </button>
+    <div className="flex flex-col gap-3">
+      {/* Email info */}
+      {session?.email && (
+        <div className="flex items-center gap-2 bg-[#1a1a26] rounded-xl px-3 py-2.5">
+          <span className="text-[#64748b] text-sm">✉️</span>
+          <span className="text-[#64748b] text-xs truncate flex-1">{session.email}</span>
+        </div>
+      )}
+
+      {/* Logout */}
+      <button
+        onClick={handleLogout}
+        className="w-full flex items-center justify-center gap-2 bg-[#1a1a26] hover:bg-[#2a2a3a] border border-[#2a2a3a] text-[#f1f5f9] text-sm font-medium py-2.5 rounded-xl transition-all"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+        Sair da conta
+      </button>
+
+      {/* Reset */}
+      {!confirmReset ? (
+        <button
+          onClick={() => setConfirmReset(true)}
+          className="w-full bg-[#ef4444]/10 hover:bg-[#ef4444]/15 border border-[#ef4444]/20 text-[#ef4444] text-xs font-medium py-2.5 rounded-xl transition-all"
+        >
+          Resetar todos os dados do jogo
+        </button>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <p className="text-[#ef4444] text-xs font-medium">
+            ⚠️ Isso apagará todo o progresso, treinos e dados permanentemente.
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setConfirmReset(false)}
+              className="flex-1 bg-[#1a1a26] border border-[#2a2a3a] text-[#64748b] text-xs font-medium py-2 rounded-lg transition-all hover:text-white"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleReset}
+              className="flex-1 bg-[#ef4444]/20 border border-[#ef4444]/40 text-[#ef4444] text-xs font-semibold py-2 rounded-lg transition-all hover:bg-[#ef4444]/30"
+            >
+              Confirmar
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
