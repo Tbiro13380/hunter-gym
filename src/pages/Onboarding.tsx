@@ -1,11 +1,14 @@
 import { useState } from 'react'
 import { useUserStore } from '../store/userStore'
+import { useAuthStore } from '../store/authStore'
+import { SUPABASE_ENABLED } from '../lib/supabaseClient'
 
 export default function Onboarding() {
   const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const initProfile = useUserStore((s) => s.initProfile)
+  const session = useAuthStore((s) => s.session)
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -15,7 +18,8 @@ export default function Onboarding() {
       return
     }
     setSubmitted(true)
-    setTimeout(() => initProfile(trimmed), 600)
+    const uid = SUPABASE_ENABLED && session ? session.accountId : undefined
+    setTimeout(() => initProfile(trimmed, uid), 600)
   }
 
   return (

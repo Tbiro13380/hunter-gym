@@ -9,7 +9,7 @@ type UserStore = {
   isOnboarded: boolean
   setProfile: (profile: UserProfile) => void
   updateProfile: (partial: Partial<UserProfile>) => void
-  initProfile: (name: string) => void
+  initProfile: (name: string, userId?: string) => void
   recalculateStats: (sessions: Session[]) => void
   addXP: (amount: number) => void
   addTitle: (titleId: string) => void
@@ -39,10 +39,10 @@ export const useUserStore = create<UserStore>()(
           profile: state.profile ? { ...state.profile, ...partial } : null,
         })),
 
-      initProfile: (name) => {
+      initProfile: (name, userId) => {
         const profile: UserProfile = {
           ...DEFAULT_PROFILE,
-          id: crypto.randomUUID(),
+          id: userId ?? crypto.randomUUID(),
           name,
           titles: [],
           activeTitle: '',

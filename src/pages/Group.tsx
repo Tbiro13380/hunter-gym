@@ -1,7 +1,17 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useGroupStore } from '../store/groupStore'
 import { useUserStore } from '../store/userStore'
 import { useWorkoutStore } from '../store/workoutStore'
+import { useAuthStore } from '../store/authStore'
+import { supabase, SUPABASE_ENABLED } from '../lib/supabaseClient'
+import {
+  fetchGroupById,
+  createGroupRemote,
+  joinGroupRemote,
+  insertFeedEventRemote,
+  upsertDungeonRemote,
+  updateFeedEventRemote,
+} from '../services/groupCloud'
 import { RANK_COLORS } from '../lib/gamificationLogic'
 import { getSessionVolume } from '../lib/progressionLogic'
 import type { GroupMember, Dungeon, FeedEvent, Group as GroupType, UserProfile, Session } from '../lib/types'
@@ -46,22 +56,22 @@ function NoGroupView({
   onCreateGroup,
   onJoinGroup,
 }: {
-  onCreateGroup: (name: string) => void
-  onJoinGroup: (code: string) => string | null
+  onCreateGroup: (name: string) => void | Promise<void>
+  onJoinGroup: (code: string) => Promise<string | null>
 }) {
   const [mode, setMode] = useState<'choose' | 'create' | 'join'>('choose')
   const [groupName, setGroupName] = useState('')
   const [inviteCode, setInviteCode] = useState('')
   const [error, setError] = useState('')
 
-  function handleCreate() {
+  async function handleCreate() {
     if (!groupName.trim()) { setError('Nome do grupo obrigatório'); return }
-    onCreateGroup(groupName.trim())
+    await onCreateGroup(groupName.trim())
   }
 
-  function handleJoin() {
+  async function handleJoin() {
     if (!inviteCode.trim()) { setError('Código obrigatório'); return }
-    const result = onJoinGroup(inviteCode.trim().toUpperCase())
+    const result = await onJoinGroup(inviteCode.trim().toUpperCase())
     if (!result) setError('Código inválido. Verifique e tente novamente.')
   }
 
@@ -186,7 +196,36 @@ function GroupView({
   const [dungeonModalOpen, setDungeonModalOpen] = useState(false)
   const [inviteModalOpen, setInviteModalOpen] = useState(false)
   const [codeCopied, setCodeCopied] = useState(false)
-  const { addFeedEvent, addDungeon, completeDungeon, addReaction } = useGroupStore()
+  const { addFeedEvent, addDungeon, completeDungeon, addReaction, setGroup } = useGroupStore()
+  const accountId = useAuthStore((s) => s.session?.accountId)
+
+  useEffect(() => {
+    if (!SUPABASE_ENABLED || !supabase || !group.id || !accountId) return
+    const client = supabase
+
+    const refresh = async () => {
+      const g = await fetchGroupById(group.id, accountId)
+      if (g) setGroup(g)
+    }
+
+    const channel = client
+      .channel(`guild:${group.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'group_feed_events', filter: `group_id=eq.${group.id}` },
+        () => { void refresh() }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'group_dungeons', filter: `group_id=eq.${group.id}` },
+        () => { void refresh() }
+      )
+      .subscribe()
+
+    return () => {
+      void client.removeChannel(channel)
+    }
+  }, [group.id, accountId, setGroup])
 
   // Build member list with self merged in with live stats
   const members: GroupMember[] = useMemo(() => {
@@ -218,8 +257,11 @@ function GroupView({
     setTimeout(() => setCodeCopied(false), 2000)
   }
 
-  function handleCreateDungeon(dungeon: Dungeon) {
+  async function handleCreateDungeon(dungeon: Dungeon) {
     addDungeon(dungeon)
+    if (SUPABASE_ENABLED) {
+      await upsertDungeonRemote(group.id, dungeon)
+    }
 
     const feedEvent: FeedEvent = {
       id: crypto.randomUUID(),
@@ -231,11 +273,20 @@ function GroupView({
       reactions: [],
     }
     addFeedEvent(feedEvent)
+    if (SUPABASE_ENABLED) {
+      await insertFeedEventRemote(group.id, feedEvent)
+    }
   }
 
-  function handleCompleteDungeon(dungeonId: string) {
+  async function handleCompleteDungeon(dungeonId: string) {
     completeDungeon(dungeonId, profile.id)
-    const dungeon = group.dungeons.find((d) => d.id === dungeonId)
+    const after = useGroupStore.getState().group
+    const d = after?.dungeons.find((x) => x.id === dungeonId)
+    if (SUPABASE_ENABLED && after && d) {
+      await upsertDungeonRemote(after.id, d)
+    }
+
+    const dungeon = group.dungeons.find((x) => x.id === dungeonId)
 
     const feedEvent: FeedEvent = {
       id: crypto.randomUUID(),
@@ -247,6 +298,17 @@ function GroupView({
       reactions: [],
     }
     addFeedEvent(feedEvent)
+    if (SUPABASE_ENABLED) {
+      await insertFeedEventRemote(group.id, feedEvent)
+    }
+  }
+
+  function handleReact(eventId: string, emoji: string) {
+    addReaction(eventId, profile.id, emoji)
+    const ev = useGroupStore.getState().group?.feed.find((e) => e.id === eventId)
+    if (SUPABASE_ENABLED && ev) {
+      void updateFeedEventRemote(eventId, ev)
+    }
   }
 
   const TABS: { id: Tab; label: string; icon: string }[] = [
@@ -322,7 +384,7 @@ function GroupView({
                   key={event.id}
                   event={event}
                   currentUserId={profile.id}
-                  onReact={(eventId, emoji) => addReaction(eventId, profile.id, emoji)}
+                  onReact={(eventId, emoji) => handleReact(eventId, emoji)}
                 />
               ))
             )}
@@ -478,17 +540,35 @@ function GroupView({
 // ── Main Page ──────────────────────────────────────────────────────────────
 
 export default function Group() {
-  const { group, createGroup, joinGroup } = useGroupStore()
+  const { group, createGroup, joinGroup, setGroup } = useGroupStore()
   const profile = useUserStore((s) => s.profile)
   const { sessions } = useWorkoutStore()
+  const session = useAuthStore((s) => s.session)
 
   if (!profile) return null
 
-  function handleCreateGroup(name: string) {
+  async function handleCreateGroup(name: string) {
+    if (SUPABASE_ENABLED && session) {
+      const gid = await createGroupRemote(name)
+      if (gid) {
+        const g = await fetchGroupById(gid, session.accountId)
+        if (g) setGroup(g)
+      }
+      return
+    }
     createGroup(name, profile!.id, profile!.name)
   }
 
-  function handleJoinGroup(code: string): string | null {
+  async function handleJoinGroup(code: string): Promise<string | null> {
+    if (SUPABASE_ENABLED && session) {
+      const gid = await joinGroupRemote(code)
+      if (gid) {
+        const g = await fetchGroupById(gid, session.accountId)
+        if (g) setGroup(g)
+        return gid
+      }
+      return null
+    }
     const g = joinGroup(code)
     return g ? g.id : null
   }

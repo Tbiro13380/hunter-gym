@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { SUPABASE_ENABLED } from '../lib/supabaseClient'
 import { useUserStore } from '../store/userStore'
 import { useWorkoutStore } from '../store/workoutStore'
 import { useGamificationStore } from '../store/gamificationStore'
@@ -163,6 +164,17 @@ export default function Dashboard() {
           className="absolute -top-10 -right-10 w-48 h-48 rounded-full blur-3xl opacity-20 pointer-events-none"
           style={{ background: rankColor }}
         />
+
+        {SUPABASE_ENABLED && (
+          <Link
+            to="/ranking-global"
+            className="inline-flex items-center gap-2 mb-4 px-3 py-2 rounded-none border border-[#2a2a3a] bg-[#12121a]/80 text-xs text-[#a855f7] hover:border-[#7c3aed]/50 transition-colors"
+          >
+            <span>🏆</span>
+            <span className="font-mono-timer tracking-wide">RANKING GLOBAL</span>
+            <span aria-hidden>→</span>
+          </Link>
+        )}
 
         {/* Profile row */}
         <div className="flex items-start gap-4 relative">

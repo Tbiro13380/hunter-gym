@@ -18,6 +18,8 @@ import RankBadge from '../components/gamification/RankBadge'
 import StatBars from '../components/gamification/StatBars'
 import TitleBadge from '../components/gamification/TitleBadge'
 import Modal from '../components/ui/Modal'
+import { SUPABASE_ENABLED } from '../lib/supabaseClient'
+import { isPushSupported, savePushSubscription, removePushSubscriptions } from '../lib/pushNotifications'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -218,9 +220,12 @@ export default function Profile() {
     setTitlePickerOpen(false)
   }
 
-  function handleSaveName() {
+  const updateAccountName = useAuthStore((s) => s.updateAccountName)
+
+  async function handleSaveName() {
     const trimmed = newName.trim()
     if (trimmed.length < 2) return
+    await updateAccountName(trimmed)
     useUserStore.getState().updateProfile({ name: trimmed })
     setEditNameOpen(false)
   }
@@ -446,11 +451,12 @@ export default function Profile() {
 
 function AccountSection() {
   const [confirmReset, setConfirmReset] = useState(false)
+  const [pushBusy, setPushBusy] = useState(false)
   const session = useAuthStore((s) => s.session)
   const logout = useAuthStore((s) => s.logout)
 
-  function handleLogout() {
-    logout()
+  async function handleLogout() {
+    await logout()
   }
 
   function handleReset() {
@@ -466,6 +472,35 @@ function AccountSection() {
           <span className="text-[#64748b] text-sm">✉️</span>
           <span className="text-[#64748b] text-xs truncate flex-1">{session.email}</span>
         </div>
+      )}
+
+      {SUPABASE_ENABLED && session && isPushSupported() && (
+        <button
+          type="button"
+          disabled={pushBusy}
+          onClick={async () => {
+            if (!session) return
+            setPushBusy(true)
+            try {
+              await savePushSubscription(session.accountId)
+            } finally {
+              setPushBusy(false)
+            }
+          }}
+          className="w-full flex items-center justify-center gap-2 bg-[#1a1a26] hover:bg-[#2a2a3a] border border-[#2a2a3a] text-[#94a3b8] text-xs font-medium py-2.5 rounded-xl transition-all disabled:opacity-50"
+        >
+          {pushBusy ? 'Ativando…' : 'Ativar lembretes push (streak/dungeons)'}
+        </button>
+      )}
+
+      {SUPABASE_ENABLED && session && isPushSupported() && (
+        <button
+          type="button"
+          onClick={() => session && removePushSubscriptions(session.accountId)}
+          className="w-full text-[10px] text-[#64748b] hover:text-[#94a3b8] py-1"
+        >
+          Remover inscrição push
+        </button>
       )}
 
       {/* Logout */}

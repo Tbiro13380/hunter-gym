@@ -4,6 +4,7 @@ import type { Group, FeedEvent, Dungeon } from '../lib/types'
 
 type GroupStore = {
   group: Group | null
+  setGroup: (group: Group | null) => void
   createGroup: (name: string, userId: string, userName: string) => Group
   joinGroup: (inviteCode: string) => Group | null
   addFeedEvent: (event: FeedEvent) => void
@@ -20,6 +21,8 @@ export const useGroupStore = create<GroupStore>()(
   persist(
     (set, get) => ({
       group: null,
+
+      setGroup: (group) => set({ group }),
 
       createGroup: (name, userId, userName) => {
         const group: Group = {

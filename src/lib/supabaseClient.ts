@@ -1,18 +1,32 @@
-/**
- * Supabase Client — FASE 1: Mock local (localStorage)
- * Fase 2: Descomentar a inicialização real do Supabase e remover os mocks.
- */
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
-// import { createClient } from '@supabase/supabase-js'
-//
-// const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-// const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-//
-// export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
+const anon = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 
-export const SUPABASE_ENABLED = false
+function isConfigured(): boolean {
+  if (!url || !anon) return false
+  const u = url.trim().toLowerCase()
+  const a = anon.trim().toLowerCase()
+  if (u.includes('desativado') || a.includes('desativado')) return false
+  if (!u.startsWith('http')) return false
+  if (a.length < 20) return false
+  return true
+}
 
-// Mock functions that read from localStorage — allows a clean migration later
+export const SUPABASE_ENABLED = isConfigured()
+
+export const supabase: SupabaseClient | null = SUPABASE_ENABLED
+  ? createClient(url!, anon!, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+      },
+    })
+  : null
+
+/** Mock legado (Fase 1) — mantido para compatibilidade */
 export const supabaseMock = {
   async getProfile(userId: string) {
     const data = localStorage.getItem(`profile_${userId}`)
