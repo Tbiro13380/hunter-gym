@@ -16,7 +16,7 @@ import Modal from '../components/ui/Modal'
 
 export default function WorkoutActive() {
   const navigate = useNavigate()
-  const { activeSession, templates, sessions, logSet, removeLastSet, finishSession, cancelSession } =
+  const { activeSession, templates, sessions, logSet, removeLastSet, addSession, cancelSession } =
     useWorkoutStore()
   const profile = useUserStore((s) => s.profile)
   const { processCompletedSession } = useGamification()
@@ -108,28 +108,29 @@ export default function WorkoutActive() {
 
   function handleFinish() {
     stopwatch.pause()
-    const session = finishSession(stopwatch.elapsed)
-    if (!session) {
+
+    if (!activeSession) return
+
+    // Filter entries with at least one logged set
+    const filledEntries = activeSession.entries.filter((e) => e.sets.length > 0)
+    if (filledEntries.length === 0) {
+      cancelSession()
       navigate('/treino', { replace: true })
       return
     }
 
-    // Calculate XP gained
-    let xp = XP_VALUES.WORKOUT_COMPLETE
-    for (const entry of session.entries) {
-      const prevMax = sessions
-        .flatMap((s) => s.entries)
-        .filter((e) => e.exerciseId === entry.exerciseId)
-        .flatMap((e) => e.sets)
-        .reduce((max, set) => Math.max(max, set.weight), 0)
-      const newMax = Math.max(...entry.sets.map((s) => s.weight), 0)
-      if (newMax > prevMax && prevMax > 0) xp += XP_VALUES.LOAD_PROGRESSION
+    // Build session object before any store mutation
+    const session: Session = {
+      id: crypto.randomUUID(),
+      date: new Date().toISOString(),
+      templateId: activeSession.templateId,
+      templateName: activeSession.templateName,
+      durationSeconds: stopwatch.elapsed,
+      entries: filledEntries,
     }
 
-    // Process gamification (store updates happen here)
-    processCompletedSession(session)
-
-    // Collect PR events from the session for summary display
+    // Calculate XP and collect PR events in a single pass
+    let xp = XP_VALUES.WORKOUT_COMPLETE
     const prEvents: GamificationEvent[] = []
     for (const entry of session.entries) {
       const prevMax = sessions
@@ -139,6 +140,7 @@ export default function WorkoutActive() {
         .reduce((max, set) => Math.max(max, set.weight), 0)
       const newMax = Math.max(...entry.sets.map((s) => s.weight), 0)
       if (newMax > prevMax && prevMax > 0) {
+        xp += XP_VALUES.LOAD_PROGRESSION
         prEvents.push({
           type: 'pr_broken',
           payload: { exercise: entry.exerciseName, oldPR: prevMax, newPR: newMax },
@@ -147,7 +149,18 @@ export default function WorkoutActive() {
       }
     }
 
+    // CRITICAL: Set summary BEFORE clearing activeSession to prevent black screen.
+    // All these state updates are batched by React 18 within the event handler.
     setSummary({ session, xpGained: xp, events: prEvents })
+    addSession(session)
+    cancelSession()
+
+    // Process gamification — non-critical for UI, protected against errors
+    try {
+      processCompletedSession(session)
+    } catch (err) {
+      console.error('[Gamification] Error processing completed session:', err)
+    }
   }
 
   function handleCancel() {
@@ -156,7 +169,8 @@ export default function WorkoutActive() {
   }
 
   function handleSummaryClose() {
-    setSummary(null)
+    // Navigate directly — component unmounts on route change, no need to clear state.
+    // Clearing summary before navigating would trigger the useEffect redirect to /treino.
     navigate('/', { replace: true })
   }
 
